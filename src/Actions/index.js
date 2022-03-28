@@ -1,23 +1,30 @@
-import { SET_USER } from "../Actions/ActionType";
+import { SET_USER, SET_LOADING_STATUS } from "../Actions/ActionType";
 import { auth, db, storage } from "../firebase";
-import firebase from "firebase/compat/app";
-
 import {
   signInWithPopup,
   GoogleAuthProvider,
   onAuthStateChanged,
 } from "firebase/auth";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
 import {
-  getDownloadURL,
-  ref,
-  uploadBytes,
-  uploadBytesResumable,
-} from "firebase/storage";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+  addDoc,
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+} from "firebase/firestore";
+
+//............................................
 
 export const setUser = (payload) => ({
   type: SET_USER,
   user: payload,
+});
+
+export const setLoading = (status) => ({
+  type: SET_LOADING_STATUS,
+  status: status,
 });
 
 export const SignInWithGoogle = (props) => {
@@ -33,7 +40,7 @@ export const SignInWithGoogle = (props) => {
 
 export function getUserAuth() {
   return (dispatch) => {
-    auth.onAuthStateChanged(async (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         dispatch(setUser(user));
       }
@@ -52,52 +59,9 @@ export function signOutAPI() {
   };
 }
 
-// export function postArticleAPI(payload) {
-//   return (dispatch) => {
-//     if (!payload.image) {
-//       const reff = ref(storage, `images/${payload.image.name}`);
-//       const upload = uploadBytesResumable(reff, payload.image);
-//       upload.on(
-//         "state_changed",
-//         (snapshot) => {
-//           const progress = Math.round(
-//             (snapshot.BytesTransferred / snapshot.totalBytes) * 100
-//           );
-//           console.log(`Progress: ${progress}%`);
-//           if (snapshot.state === "RUNNING") {
-//             console.log(`Progress: ${progress}%`);
-//           }
-//         },
-//         (error) => {
-//           console.log(error.code);
-//         },
-
-//         getDownloadURL(upload.snapshot.ref)
-//           .then((url) => {
-//             const articleRef = collection(db, "Articles");
-//             articleRef.addDoc({
-//               actor: {
-//                 description: payload.user.email,
-//                 title: payload.user.displayName,
-//                 timestamp: Timestamp.now().toDate(),
-//                 image: url,
-//               },
-//               video: C
-//               sharedImg: url,
-//               comments: 0,
-//               description: payload.description,
-//             });
-//           })
-//           .catch((err) => {
-//             console.log("image uploaded error");
-//           })
-//       );
-//     }
-//   };
-// }
-
 export function postArticleAPI(payload) {
   return (dispatch) => {
+    dispatch(setLoading(true));
     if (payload.image !== "") {
       const reff = ref(storage, `images/${payload.image.name}`);
       const upload = uploadBytesResumable(reff, payload.image);
@@ -120,7 +84,7 @@ export function postArticleAPI(payload) {
             actor: {
               description: payload.user.email,
               title: payload.user.displayName,
-              timestamp: Timestamp.now().toDate(),
+              date: Timestamp.now().toDate(),
               image: payload.user.photoURL,
             },
             video: payload.video,
@@ -128,8 +92,36 @@ export function postArticleAPI(payload) {
             comments: 0,
             description: payload.description,
           });
+          dispatch(setLoading(false));
         }
       );
+    } else if (payload.video) {
+      const amin = collection(db, "articles");
+      addDoc(amin, {
+        actor: {
+          description: payload.user.email,
+          title: payload.user.displayName,
+          date: Timestamp.now().toDate(),
+          image: payload.user.photoURL,
+        },
+        video: payload.video,
+        sharedImg: "",
+        comments: 0,
+        description: payload.description,
+      });
+      dispatch(setLoading(false));
     }
   };
 }
+
+// export function getArticleAPI() {
+//   return (dispatch) => {
+//     let payload;
+//     const colRef = collection((db, "articles"), orderBy("actor.date", "desc"));
+//     // const q = query(collection(db, "guides"), orderBy("actor.date", "desc"));
+//     onSnapshot(colRef, (snapshot) => {
+//       payload = snapshot.docs.map((doc) => doc.data());
+//       console.log(payload);
+//     });
+//   };
+// }

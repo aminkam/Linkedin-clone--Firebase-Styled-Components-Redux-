@@ -4,7 +4,7 @@ import { signOutAPI } from "../Actions";
 // import { signOutAPI } from "../Actions";
 
 const Header = (props) => {
-  console.log(props.user);
+  // s
   return (
     <Container>
       <Content>
