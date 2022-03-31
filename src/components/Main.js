@@ -78,7 +78,7 @@ const Main = (props) => {
               <img src="/images/ellipsis-icon.svg" alt="" />
             </button>
           </SharedActor>
-          <Description>Description</Description>
+          <Description>Description !!</Description>
           <SharedImg>
             <a>
               {" "}

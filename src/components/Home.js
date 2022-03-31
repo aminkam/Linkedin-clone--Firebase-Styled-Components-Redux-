@@ -75,7 +75,7 @@ const Layout = styled.div`
   @media (max-width: 768px) {
     display: flex;
     flex-direction: column;
-    padding: 0 5px;
+    padding: 0 6px;
   }
 `;
 
